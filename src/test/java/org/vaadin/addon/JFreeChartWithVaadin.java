@@ -21,27 +21,24 @@ import org.jfree.data.xy.DefaultTableXYDataset;
 import org.jfree.data.xy.DefaultXYDataset;
 import org.jfree.data.xy.XYSeries;
 
-import com.vaadin.Application;
+import com.vaadin.server.VaadinRequest;
 import com.vaadin.ui.Component;
+import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
-import com.vaadin.ui.Window;
 
 /**
  * Simple Vaadin app for testing purposes that displays some ugly charts with
  * {@link JFreeChartWrapper}.
  * 
  */
-public class JFreeChartWithVaadin extends Application {
+public class JFreeChartWithVaadin extends UI {
 
 	private static final long serialVersionUID = 1L;
-
 	@Override
-	public void init() {
-		Window w = new Window();
-		setMainWindow(w);
-
-		w.addComponent(getTestAndDemos());
-
+	protected void init(VaadinRequest request) {
+	    final VerticalLayout layout = new VerticalLayout();
+	    layout.addComponent(getTestAndDemos());
+	    setContent(layout);    
 	}
 
 	public static JFreeChartWrapper createBasicDemo() {

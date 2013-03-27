@@ -4,7 +4,7 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 
-import com.vaadin.terminal.gwt.server.ApplicationServlet;
+import com.vaadin.server.VaadinServlet;
 
 public class TestServer {
 	private static final int PORT = 8080;
@@ -16,8 +16,8 @@ public class TestServer {
 		context.setContextPath("/");
 		server.setHandler(context);
 		ServletHolder servletHolder = new ServletHolder(
-				ApplicationServlet.class);
-		servletHolder.setInitParameter("application",
+				VaadinServlet.class);
+		servletHolder.setInitParameter("UI",
 				JFreeChartWithVaadin.class.getName());
 		context.addServlet(servletHolder, "/*");
 

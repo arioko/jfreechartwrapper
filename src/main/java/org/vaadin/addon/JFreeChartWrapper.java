@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright 2009 IT Mill Ltd.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -12,6 +12,8 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
+ * 
+ * Vaadin 7 port by Magnolia International Ltd.
  */
 package org.vaadin.addon;
 
@@ -19,6 +21,7 @@ import java.awt.Rectangle;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
@@ -36,12 +39,12 @@ import org.jfree.chart.JFreeChart;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import com.vaadin.Application;
-import com.vaadin.terminal.ApplicationResource;
-import com.vaadin.terminal.DownloadStream;
-import com.vaadin.terminal.Resource;
-import com.vaadin.terminal.Sizeable;
-import com.vaadin.terminal.gwt.server.AbstractWebApplicationContext;
+import com.vaadin.server.DownloadStream;
+import com.vaadin.server.Resource;
+import com.vaadin.server.Sizeable;
+import com.vaadin.server.StreamResource;
+import com.vaadin.server.StreamResource.StreamSource;
+import com.vaadin.server.WebBrowser;
 import com.vaadin.ui.Embedded;
 
 /**
@@ -77,7 +80,7 @@ public class JFreeChartWrapper extends Embedded {
 	private static final int DEFAULT_HEIGHT = 500;
 
 	private final JFreeChart chart;
-	private ApplicationResource res;
+	private Resource res;
 	private RenderingMode mode = RenderingMode.AUTO;
 	private boolean gzipEnabled = false;
 	private int graphWidthInPixels = -1;
@@ -86,8 +89,8 @@ public class JFreeChartWrapper extends Embedded {
 
 	public JFreeChartWrapper(JFreeChart chartToBeWrapped) {
 		chart = chartToBeWrapped;
-		setWidth(DEFAULT_WIDTH, UNITS_PIXELS);
-		setHeight(DEFAULT_HEIGHT, UNITS_PIXELS);
+		setWidth(DEFAULT_WIDTH, Unit.PIXELS);
+		setHeight(DEFAULT_HEIGHT, Unit.PIXELS);
 	}
 
 	public JFreeChartWrapper(JFreeChart chartToBeWrapped,
@@ -101,11 +104,10 @@ public class JFreeChartWrapper extends Embedded {
 	 * server does not automatically compress responses.
 	 * 
 	 * @param compress
-	 *            true to enable component level compression, default false
+	 * true to enable component level compression, default false
 	 */
 	public void setGzipCompression(boolean compress) {
 		this.gzipEnabled = compress;
-		requestRepaint();
 	}
 
 	private void setRenderingMode(RenderingMode newMode) {
@@ -119,25 +121,22 @@ public class JFreeChartWrapper extends Embedded {
 	}
 
 	@Override
-	public void attach() {
+	public void attach() {        
 		super.attach();
-		AbstractWebApplicationContext context = (AbstractWebApplicationContext) getApplication()
-				.getContext();
 		if (mode == RenderingMode.AUTO) {
-			if (context.getBrowser().isIE()
-					&& context.getBrowser().getBrowserMajorVersion() < 9) {
+			WebBrowser browser = getSession().getBrowser();
+			if (browser.isIE()
+					&& browser.getBrowserMajorVersion() < 9) {
 				setRenderingMode(RenderingMode.PNG);
 			} else {
 				// all decent browsers support SVG
 				setRenderingMode(RenderingMode.SVG);
 			}
 		}
-		getApplication().addResource((ApplicationResource) getSource());
 	}
 
 	@Override
 	public void detach() {
-		getApplication().removeResource((ApplicationResource) getSource());
 		super.detach();
 	}
 
@@ -146,9 +145,7 @@ public class JFreeChartWrapper extends Embedded {
 	 * relative sizes. Most commonly you should use just use common methods
 	 * inherited from {@link Sizeable} interface.
 	 * <p>
-	 * Sets the pixel size of the area where the graph is rendered. Most
-	 * commonly developer may need to fine tune the value when the
-	 * {@link JFreeChartWrapper} has a relative size.
+	 * Sets the pixel size of the area where the graph is rendered. Most commonly developer may need to fine tune the value when the {@link JFreeChartWrapper} has a relative size.
 	 * 
 	 * @see JFreeChartWrapper#getGraphWidth()
 	 * @see #setSvgAspectRatio(String)
@@ -163,9 +160,7 @@ public class JFreeChartWrapper extends Embedded {
 	 * relative sizes. Most commonly you should use just use common methods
 	 * inherited from {@link Sizeable} interface.
 	 * <p>
-	 * Sets the pixel size of the area where the graph is rendered. Most
-	 * commonly developer may need to fine tune the value when the
-	 * {@link JFreeChartWrapper} has a relative size.
+	 * Sets the pixel size of the area where the graph is rendered. Most commonly developer may need to fine tune the value when the {@link JFreeChartWrapper} has a relative size.
 	 * 
 	 * @see JFreeChartWrapper#getGraphHeigt()
 	 * @see #setSvgAspectRatio(String)
@@ -190,13 +185,13 @@ public class JFreeChartWrapper extends Embedded {
 			return DEFAULT_WIDTH;
 		}
 		switch (getWidthUnits()) {
-		case UNITS_CM:
+		case CM:
 			width = (int) (w * 96 / 2.54);
 			break;
-		case UNITS_INCH:
+		case INCH:
 			width = (int) (w * 96);
 			break;
-		case UNITS_PERCENTAGE:
+		case PERCENTAGE:
 			width = DEFAULT_WIDTH;
 			break;
 		default:
@@ -221,13 +216,13 @@ public class JFreeChartWrapper extends Embedded {
 			return DEFAULT_HEIGHT;
 		}
 		switch (getWidthUnits()) {
-		case UNITS_CM:
+		case CM:
 			height = (int) (w * 96 / 2.54);
 			break;
-		case UNITS_INCH:
+		case INCH:
 			height = (int) (w * 96);
 			break;
-		case UNITS_PERCENTAGE:
+		case PERCENTAGE:
 			height = DEFAULT_HEIGHT;
 			break;
 		default:
@@ -243,8 +238,6 @@ public class JFreeChartWrapper extends Embedded {
 
 	/**
 	 * See SVG spec from W3 for more information.
-	 * 
-	 * 
 	 * Default is "none" (stretch), another common value is "xMidYMid" (stretch
 	 * proportionally, align middle of the area).
 	 * 
@@ -257,8 +250,7 @@ public class JFreeChartWrapper extends Embedded {
 	@Override
 	public Resource getSource() {
 		if (res == null) {
-			res = new ApplicationResource() {
-
+			StreamSource streamSource = new StreamResource.StreamSource() {
 				private ByteArrayInputStream bytestream = null;
 
 				ByteArrayInputStream getByteStream() {
@@ -267,7 +259,7 @@ public class JFreeChartWrapper extends Embedded {
 						int height = getGraphHeight();
 
 						if (mode == RenderingMode.SVG) {
-
+                        
 							DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory
 									.newInstance();
 							DocumentBuilder docBuilder = null;
@@ -280,11 +272,11 @@ public class JFreeChartWrapper extends Embedded {
 							Document document = docBuilder.newDocument();
 							Element svgelem = document.createElement("svg");
 							document.appendChild(svgelem);
-
+                            
 							// Create an instance of the SVG Generator
 							SVGGraphics2D svgGenerator = new SVGGraphics2D(
 									document);
-
+                            
 							// draw the chart in the SVG generator
 							chart.draw(svgGenerator, new Rectangle(widht,
 									height));
@@ -295,25 +287,25 @@ public class JFreeChartWrapper extends Embedded {
 									"width:100%;height:100%;");
 							el.setAttributeNS(null, "preserveAspectRatio",
 									getSvgAspectRatio());
-
+                            
 							// Write svg to buffer
 							ByteArrayOutputStream baoutputStream = new ByteArrayOutputStream();
 							Writer out;
 							try {
 								OutputStream outputStream = gzipEnabled ? new GZIPOutputStream(
 										baoutputStream) : baoutputStream;
-								out = new OutputStreamWriter(outputStream,
-										"UTF-8");
-								/*
-								 * don't use css, FF3 can'd deal with the result
-								 * perfectly: wrong font sizes
-								 */
-								boolean useCSS = false;
-								svgGenerator.stream(el, out, useCSS, false);
-								outputStream.flush();
-								outputStream.close();
-								bytestream = new ByteArrayInputStream(
-										baoutputStream.toByteArray());
+										out = new OutputStreamWriter(outputStream,
+												"UTF-8");
+										/*
+										 * don't use css, FF3 can'd deal with the result
+										 * perfectly: wrong font sizes
+										 */
+										boolean useCSS = false;
+										svgGenerator.stream(el, out, useCSS, false);
+										outputStream.flush();
+										outputStream.close();
+										bytestream = new ByteArrayInputStream(
+												baoutputStream.toByteArray());
 							} catch (UnsupportedEncodingException e) {
 								// TODO Auto-generated catch block
 								e.printStackTrace();
@@ -342,40 +334,54 @@ public class JFreeChartWrapper extends Embedded {
 					}
 					return bytestream;
 				}
-
-				public Application getApplication() {
-					return JFreeChartWrapper.this.getApplication();
+				
+				@Override
+				public InputStream getStream() {
+					return getByteStream();
 				}
+			};
 
+			res = new StreamResource(streamSource, String.format("graph%d.png", System.currentTimeMillis())) {
+
+				@Override
 				public int getBufferSize() {
-					if (getByteStream() != null) {
-						return getByteStream().available();
+					if (getStreamSource().getStream() != null) {
+						try {
+							return getStreamSource().getStream().available();
+						} catch (IOException e) {
+							return 0;
+						}
 					} else {
 						return 0;
 					}
 				}
-
+                
+                
+				@Override
 				public long getCacheTime() {
 					return 0;
 				}
-
+                
+				@Override
 				public String getFilename() {
 					if (mode == RenderingMode.PNG) {
-						return "graph.png";
+						return super.getFilename();
 					} else {
 						return gzipEnabled ? "graph.svgz" : "graph.svg";
 					}
 				}
-
+                
+				@Override
 				public DownloadStream getStream() {
 					DownloadStream downloadStream = new DownloadStream(
-							getByteStream(), getMIMEType(), getFilename());
+							getStreamSource().getStream(), getMIMEType(), getFilename());
 					if (gzipEnabled && mode == RenderingMode.SVG) {
 						downloadStream.setParameter("Content-Encoding", "gzip");
 					}
 					return downloadStream;
 				}
-
+                
+				@Override
 				public String getMIMEType() {
 					if (mode == RenderingMode.PNG) {
 						return "image/png";
