@@ -393,4 +393,13 @@ public class JFreeChartWrapper extends Embedded {
 		}
 		return res;
 	}
+	
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void markAsDirty() {
+        super.markAsDirty();
+        res = null;
+    }
 }
