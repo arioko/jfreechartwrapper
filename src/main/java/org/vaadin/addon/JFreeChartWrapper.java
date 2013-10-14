@@ -341,7 +341,7 @@ public class JFreeChartWrapper extends Embedded {
 				}
 			};
 
-			res = new StreamResource(streamSource, String.format("graph%d.png", System.currentTimeMillis())) {
+			res = new StreamResource(streamSource, String.format("graph%d", String.format("graph%d", System.currentTimeMillis()))) {
 
 				@Override
 				public int getBufferSize() {
@@ -365,9 +365,9 @@ public class JFreeChartWrapper extends Embedded {
 				@Override
 				public String getFilename() {
 					if (mode == RenderingMode.PNG) {
-						return super.getFilename();
+						return super.getFilename() + ".png";
 					} else {
-						return gzipEnabled ? "graph.svgz" : "graph.svg";
+					    return super.getFilename() + (gzipEnabled ? ".svgz" : ".svg");
 					}
 				}
                 
