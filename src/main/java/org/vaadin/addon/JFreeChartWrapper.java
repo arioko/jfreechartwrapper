@@ -341,7 +341,7 @@ public class JFreeChartWrapper extends Embedded {
 				}
 			};
 
-			res = new StreamResource(streamSource, String.format("graph%d", String.format("graph%d", System.currentTimeMillis()))) {
+			res = new StreamResource(streamSource, String.format("graph%d", System.currentTimeMillis())) {
 
 				@Override
 				public int getBufferSize() {
