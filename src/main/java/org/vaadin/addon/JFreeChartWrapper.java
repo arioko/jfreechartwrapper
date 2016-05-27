@@ -133,6 +133,9 @@ public class JFreeChartWrapper extends Embedded {
 				setRenderingMode(RenderingMode.SVG);
 			}
 		}
+                // Workaround for a regression that Vaadin core update caused
+                // at some point
+                setResource("src", getSource());
 	}
 
 	@Override
