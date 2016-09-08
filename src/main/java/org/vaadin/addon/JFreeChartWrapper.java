@@ -40,6 +40,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import com.vaadin.server.DownloadStream;
+import com.vaadin.server.Page;
 import com.vaadin.server.Resource;
 import com.vaadin.server.Sizeable;
 import com.vaadin.server.StreamResource;
@@ -124,7 +125,7 @@ public class JFreeChartWrapper extends Embedded {
 	public void attach() {        
 		super.attach();
 		if (mode == RenderingMode.AUTO) {
-			WebBrowser browser = getSession().getBrowser();
+			WebBrowser browser = Page.getCurrent().getWebBrowser();
 			if (browser.isIE()
 					&& browser.getBrowserMajorVersion() < 9) {
 				setRenderingMode(RenderingMode.PNG);
@@ -254,93 +255,83 @@ public class JFreeChartWrapper extends Embedded {
 	public Resource getSource() {
 		if (res == null) {
 			StreamSource streamSource = new StreamResource.StreamSource() {
-				private ByteArrayInputStream bytestream = null;
-
-				ByteArrayInputStream getByteStream() {
-					if (chart != null && bytestream == null) {
-						int widht = getGraphWidth();
-						int height = getGraphHeight();
-
-						if (mode == RenderingMode.SVG) {
-                        
-							DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory
-									.newInstance();
-							DocumentBuilder docBuilder = null;
-							try {
-								docBuilder = docBuilderFactory
-										.newDocumentBuilder();
-							} catch (ParserConfigurationException e1) {
-								throw new RuntimeException(e1);
-							}
-							Document document = docBuilder.newDocument();
-							Element svgelem = document.createElement("svg");
-							document.appendChild(svgelem);
-                            
-							// Create an instance of the SVG Generator
-							SVGGraphics2D svgGenerator = new SVGGraphics2D(
-									document);
-                            
-							// draw the chart in the SVG generator
-							chart.draw(svgGenerator, new Rectangle(widht,
-									height));
-							Element el = svgGenerator.getRoot();
-							el.setAttributeNS(null, "viewBox", "0 0 " + widht
-									+ " " + height + "");
-							el.setAttributeNS(null, "style",
-									"width:100%;height:100%;");
-							el.setAttributeNS(null, "preserveAspectRatio",
-									getSvgAspectRatio());
-                            
-							// Write svg to buffer
-							ByteArrayOutputStream baoutputStream = new ByteArrayOutputStream();
-							Writer out;
-							try {
-								OutputStream outputStream = gzipEnabled ? new GZIPOutputStream(
-										baoutputStream) : baoutputStream;
-										out = new OutputStreamWriter(outputStream,
-												"UTF-8");
-										/*
-										 * don't use css, FF3 can'd deal with the result
-										 * perfectly: wrong font sizes
-										 */
-										boolean useCSS = false;
-										svgGenerator.stream(el, out, useCSS, false);
-										outputStream.flush();
-										outputStream.close();
-										bytestream = new ByteArrayInputStream(
-												baoutputStream.toByteArray());
-							} catch (UnsupportedEncodingException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							} catch (SVGGraphics2DIOException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							} catch (IOException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							}
-						} else {
-							// Draw png to bytestream
-							try {
-								byte[] bytes = ChartUtilities.encodeAsPNG(chart
-										.createBufferedImage(widht, height));
-								bytestream = new ByteArrayInputStream(bytes);
-							} catch (IOException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							}
-
-						}
-
-					} else {
-						bytestream.reset();
-					}
-					return bytestream;
-				}
 				
 				@Override
 				public InputStream getStream() {
-					return getByteStream();
+					int widht = getGraphWidth();
+					int height = getGraphHeight();
+
+					if (mode == RenderingMode.SVG) {
+					
+						DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory
+								.newInstance();
+						DocumentBuilder docBuilder = null;
+						try {
+							docBuilder = docBuilderFactory
+									.newDocumentBuilder();
+						} catch (ParserConfigurationException e1) {
+							throw new RuntimeException(e1);
+						}
+						Document document = docBuilder.newDocument();
+						Element svgelem = document.createElement("svg");
+						document.appendChild(svgelem);
+						
+						// Create an instance of the SVG Generator
+						SVGGraphics2D svgGenerator = new SVGGraphics2D(
+								document);
+						
+						// draw the chart in the SVG generator
+						chart.draw(svgGenerator, new Rectangle(widht,
+								height));
+						Element el = svgGenerator.getRoot();
+						el.setAttributeNS(null, "viewBox", "0 0 " + widht
+								+ " " + height + "");
+						el.setAttributeNS(null, "style",
+								"width:100%;height:100%;");
+						el.setAttributeNS(null, "preserveAspectRatio",
+								getSvgAspectRatio());
+						
+						// Write svg to buffer
+						ByteArrayOutputStream baoutputStream = new ByteArrayOutputStream();
+						Writer out;
+						try {
+							OutputStream outputStream = gzipEnabled ? new GZIPOutputStream(
+									baoutputStream) : baoutputStream;
+									out = new OutputStreamWriter(outputStream,
+											"UTF-8");
+									/*
+									 * don't use css, FF3 can'd deal with the result
+									 * perfectly: wrong font sizes
+									 */
+									boolean useCSS = false;
+									svgGenerator.stream(el, out, useCSS, false);
+									outputStream.flush();
+									outputStream.close();
+									return new ByteArrayInputStream(
+											baoutputStream.toByteArray());
+						} catch (UnsupportedEncodingException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						} catch (SVGGraphics2DIOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					} else {
+						// Draw png to bytestream
+						try {
+							byte[] bytes = ChartUtilities.encodeAsPNG(chart
+									.createBufferedImage(widht, height));
+							return new ByteArrayInputStream(bytes);
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+
+					}
+					return null;
 				}
 			};
 
