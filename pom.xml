@@ -5,8 +5,8 @@
 	<groupId>org.vaadin.addon</groupId>
 	<artifactId>jfreechartwrapper</artifactId>
 	<packaging>jar</packaging>
-	<version>3.0.3</version>
-	<name>Vaadin Widget</name>
+	<version>3.0.4</version>
+	<name>JFreeChart wrapper for Vaadin</name>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
