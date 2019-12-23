@@ -17,36 +17,22 @@
  */
 package org.vaadin.addon;
 
-import java.awt.Rectangle;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
-import java.io.Writer;
-import java.util.zip.GZIPOutputStream;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-
+import com.vaadin.server.*;
+import com.vaadin.server.StreamResource.StreamSource;
+import com.vaadin.ui.Embedded;
 import org.apache.batik.svggen.SVGGraphics2D;
 import org.apache.batik.svggen.SVGGraphics2DIOException;
-import org.jfree.chart.ChartUtilities;
+import org.jfree.chart.ChartUtils;
 import org.jfree.chart.JFreeChart;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import com.vaadin.server.DownloadStream;
-import com.vaadin.server.Page;
-import com.vaadin.server.Resource;
-import com.vaadin.server.Sizeable;
-import com.vaadin.server.StreamResource;
-import com.vaadin.server.StreamResource.StreamSource;
-import com.vaadin.server.WebBrowser;
-import com.vaadin.ui.Embedded;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import java.awt.*;
+import java.io.*;
+import java.util.zip.GZIPOutputStream;
 
 /**
  * A simple JFreeChart wrapper that renders charts in SVG to browser.
@@ -166,7 +152,7 @@ public class JFreeChartWrapper extends Embedded {
 	 * <p>
 	 * Sets the pixel size of the area where the graph is rendered. Most commonly developer may need to fine tune the value when the {@link JFreeChartWrapper} has a relative size.
 	 * 
-	 * @see JFreeChartWrapper#getGraphHeigt()
+	 * @see JFreeChartWrapper#setGraphHeight(int)
 	 * @see #setSvgAspectRatio(String)
 	 * @param height
 	 */
@@ -322,7 +308,7 @@ public class JFreeChartWrapper extends Embedded {
 					} else {
 						// Draw png to bytestream
 						try {
-							byte[] bytes = ChartUtilities.encodeAsPNG(chart
+							byte[] bytes = ChartUtils.encodeAsPNG(chart
 									.createBufferedImage(widht, height));
 							return new ByteArrayInputStream(bytes);
 						} catch (IOException e) {
